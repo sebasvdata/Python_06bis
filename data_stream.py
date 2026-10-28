@@ -154,7 +154,7 @@ class DataStream:
 
     def register_processor(self, proc: DataProcessor) -> None:
         if not isinstance(proc, DataProcessor):
-            raise ValueError("Invalid processor")
+            raise NoDataError("Invalid processor")
         self._processors.append(proc)
 
     def process_stream(self, stream: list[typing.Any]) -> None:
@@ -164,13 +164,13 @@ class DataStream:
                     proc.ingest(data)
                     break
             else:
-                print("DataStream error - "
+                raise NoDataError("DataStream error - "
                       f"Can't process element in stream: {data}")
 
     def print_processors_stats(self) -> None:
         print("\n== DataStream statistics ==")
         if not self._processors:
-            print("No processor found, no data")
+            raise NoDataError("No processor found, no data")
         else:
             for proc in self._processors:
                 proc_name = proc.__class__.__name__.replace(
@@ -182,16 +182,22 @@ class DataStream:
                       "on processor")
 
 
-if __name__ == "__main__":
+def main() -> None:
     print("=== Code Nexus - Data Stream ===\n")
     print("Initialize Data Stream...")
 
     stream = DataStream()
-    stream.print_processors_stats()
+    try:
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error while printing stats: {error}")
 
     print("\nRegistering Numeric Processor")
     num_proc = NumericProcessor()
-    stream.register_processor(num_proc)
+    try:
+        stream.register_processor(num_proc)
+    except NoDataError as error:
+        print(f"No Data Error while printing stats: {error}")
 
     batch = [
         'Hello world',
@@ -211,29 +217,57 @@ if __name__ == "__main__":
     ]
 
     print(f"\nSend first batch of data on stream: {batch}")
-    stream.process_stream(batch)
-
-    stream.print_processors_stats()
+    try:
+        stream.process_stream(batch)
+    except NoDataError as error:
+        print(f"No Data Error found while procesing data: {error}")
+    try:
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error while printing stats: {error}")
 
     print("\nRegistering other data processors", end="")
     text_proc = TextProcessor()
     log_proc = LogProcessor()
 
-    stream.register_processor(text_proc)
-    stream.register_processor(log_proc)
+    try:
+        stream.register_processor(text_proc)
+        stream.register_processor(log_proc)
+    except NoDataError as error:
+        print(f"No Data Error found while registering processor: {error}")
 
     print("\nSend the same batch again", end="")
-    stream.process_stream(batch)
-
-    stream.print_processors_stats()
+    try:
+        stream.process_stream(batch)
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error found while procesing data: {error}")
 
     print("\nConsume some elements from "
           "the data processors: Numeric 3, Text 2, Log 1", end="")
-    for _ in range(3):
-        num_proc.output()
-    for _ in range(2):
-        text_proc.output()
-    for _ in range(1):
-        log_proc.output()
+    try:
+        for _ in range(3):
+            num_proc.output()
+    except NoDataError as error:
+        print(f"No Data Error while consuming elements: {error}")
+    try:
+        for _ in range(2):
+            text_proc.output()
+    except NoDataError as error:
+        print(f"No Data Error while consuming elements: {error}")
+    try:
+        for _ in range(1):
+            log_proc.output()
+    except NoDataError as error:
+        print(f"No Data Error while consuming elements: {error}")
+    try:
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error while printing stats: {error}")
 
-    stream.print_processors_stats()
+
+if __name__ == "__main__":
+    try:
+        main()
+    except BaseException as error:
+        print(f"An unexpected {error.__class__.__name__}: {error}")

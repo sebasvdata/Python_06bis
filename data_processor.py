@@ -148,7 +148,7 @@ class LogProcessor(DataProcessor):
             raise ValueError("data is not dict,list of dict")
 
 
-if __name__ == "__main__":
+def main() -> None:
     print("=== Code Nexus - Data Processor ===")
 
     print("\nTesting Numeric Processor...")
@@ -164,21 +164,33 @@ if __name__ == "__main__":
         print(f"Got exception: {error}")
 
     print("Processing data: [1, 2, 3, 4, 5]")
-    number.ingest([1, 2, 3, 4, 5])
+    try:
+        number.ingest([1, 2, 3, 4, 5])
+    except ValueError as error:
+        print(f"Value Error while processing data: {error}")
     print("Extracting 3 values...")
-    for out in range(3):
-        result = number.output()
-        print(f"Numeric value {result[0]}: {result[1]}")
+    try:
+        for _ in range(3):
+            result = number.output()
+            print(f"Numeric value {result[0]}: {result[1]}")
+    except NoDataError as error:
+        print(f"No Data Error while extracting values: {error}")
 
     print("\nTesting Text Processor...")
     text = TextProcessor()
 
     print(f"Trying to validate input '42': {text.validate(42)}")
     print("Processing data: ['Hello', 'Nexus', 'World']")
-    text.ingest(['Hello', 'Nexus', 'World'])
+    try:
+        text.ingest(['Hello', 'Nexus', 'World'])
+    except ValueError as error:
+        print(f"Value Error while processing data: {error}")
 
     print("Extracting 1 value...")
-    result = text.output()
+    try:
+        result = text.output()
+    except NoDataError as error:
+        print(f"No Data Error while extracting values: {error}")
     print(f"Text value {result[0]}: {result[1]}")
 
     print("\nTesting Log Processor...")
@@ -193,7 +205,16 @@ if __name__ == "__main__":
     log.ingest(log_data)
 
     print('Extracting 2 values...')
-    result = log.output()
-    print(f"Log entry {result[0]}: {result[1]}")
-    result = log.output()
-    print(f"Log entry {result[0]}: {result[1]}")
+    try:
+        for _ in range(2):
+            result = log.output()
+            print(f"Log entry {result[0]}: {result[1]}")
+    except NoDataError as error:
+        print(f"No Data Error while extracting values: {error}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except BaseException as error:
+        print(f"An unexpected {error.__class__.__name__}: {error}")

@@ -205,7 +205,7 @@ class DataStream:
                     proc.ingest(data)
                     break
             else:
-                print("DataStream error - "
+                raise NoDataError("DataStream error - "
                       f"Can't process element in stream: {data}")
 
     def print_processors_stats(self) -> None:
@@ -234,7 +234,7 @@ class DataStream:
                 plugin.process_output(data_to_export)
 
 
-if __name__ == "__main__":
+def main() -> None:
     print("=== Code Nexus - Data Pipeline ===\n")
     print("Initialize Data Stream...")
 
@@ -242,9 +242,14 @@ if __name__ == "__main__":
     stream.print_processors_stats()
 
     print("\nRegistering Processors")
-    stream.register_processor(NumericProcessor())
-    stream.register_processor(TextProcessor())
-    stream.register_processor(LogProcessor())
+    try:
+        stream.register_processor(NumericProcessor())
+        stream.register_processor(TextProcessor())
+        stream.register_processor(LogProcessor())
+    except ValueError as error:
+        print(f"Value Error foud while registering a processor: {error}")
+    except TypeError as error:
+        print(f"Type Error found while registering a processor: {error}")
 
     batch1 = [
         'Hello world',
@@ -264,13 +269,18 @@ if __name__ == "__main__":
     ]
 
     print(f"\nSend first batch of data on stream: {batch1}")
-    stream.process_stream(batch1)
-    stream.print_processors_stats()
+    try:
+        stream.process_stream(batch1)
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error found while procesing data: {error}")
 
     print("\nSend 3 processed data from each processor to a CSV plugin:")
     csv_plugin = CSVExportPlugin()
-    stream.output_pipeline(3, csv_plugin)
-
+    try:
+        stream.output_pipeline(3, csv_plugin)
+    except ValueError as error:
+        print(f"Value Error ocurred while processing CSV data: {error}")
     stream.print_processors_stats()
 
     batch2 = [
@@ -291,11 +301,24 @@ if __name__ == "__main__":
     ]
 
     print(f"\nSend another batch of data: {batch2}")
-    stream.process_stream(batch2)
-    stream.print_processors_stats()
+    try:
+        stream.process_stream(batch2)
+        stream.print_processors_stats()
+    except NoDataError as error:
+        print(f"No Data Error found while procesing data: {error}")
 
     print("\nSend 5 processed data from each processor to a JSON plugin:")
     json_plugin = JSONExportPlugin()
-    stream.output_pipeline(5, json_plugin)
+    try:
+        stream.output_pipeline(5, json_plugin)
+    except ValueError as error:
+        print(f"Value error ocurred while processing Json Data: {error}")
 
     stream.print_processors_stats()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except BaseException as error:
+        print(f"An unexpected {error.__class__.__name__}: {error}")
